@@ -162,7 +162,7 @@ workflow {
                 variants = Channel.fromPath(params.mvcf)
                 PyseerGenotypeMatrix(variants, manifest_ch)
                 k_matrix = PyseerGenotypeMatrix.out.kinship_matrix
-                PyseerVariants(variants,pheno,k_matrix)
+                PyseerVariants(variants, pheno, k_matrix)
             }
         } else {
             // Either use snippy to call variant from fasta, given a reference, then use Process: MergeVCF
