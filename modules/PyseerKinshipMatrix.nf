@@ -12,6 +12,6 @@ process PyseerKinshipMatrix {
     script:
     """
     phylogeny_distance.py \
-        --lmm ${tree} > phylogeny_K.tsv
+        --lmm "${tree}" > phylogeny_K.tsv
     """
 }

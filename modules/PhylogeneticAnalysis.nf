@@ -7,13 +7,13 @@ process PhylogeneticAnalysis {
     path alignment
 
     output:
-    path "*", emit: iqtree_out
+    path "*", emit: iqtree_out  //TODO Do we really want to output every file in work dir into this channel? Convenient for publishing perhaps, but might be better to be specific.
     path "*.treefile", emit: phylo_tree
 
     script:
     """
     iqtree \
-        -s core_gene_alignment.aln \
+        -s "${alignment}" \
         -pre core_tree \
         -fast \
         -m ${params.iqtree_model} \

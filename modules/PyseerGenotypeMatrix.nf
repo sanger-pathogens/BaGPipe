@@ -13,7 +13,7 @@ process PyseerGenotypeMatrix {
     script:
     """
     similarity_pyseer --version > version.txt
-    tail -n +2 ${params.manifest} | cut -d',' -f1 > sample_list.txt
-    similarity_pyseer --vcf ${variants} sample_list.txt > genotype_K.tsv
+    tail -n +2 "${manifest_ch}" | cut -d',' -f1 > sample_list.txt
+    similarity_pyseer --vcf "${variants}" sample_list.txt > genotype_K.tsv
     """
 }

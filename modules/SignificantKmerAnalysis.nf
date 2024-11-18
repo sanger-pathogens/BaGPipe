@@ -29,7 +29,7 @@ process KmerMap {
 
     script:
     """
-    phandango_mapper ${sig_kmer} ${fasta} mapped_kmers_${fasta}.plot
+    phandango_mapper "${sig_kmer}" "${fasta}" "mapped_kmers_${fasta}.plot"
     """
 }
 
@@ -50,14 +50,14 @@ process WriteReferenceText {
     while IFS="\\t" read -r col1 col2
     do 
         echo "\${col1}\\t\${col2}\tref" >> ${output_file}
-    done < ${ref_manifest_ch}
+    done < "${ref_manifest_ch}"
 
     while IFS=, read -r sample_id assembly_path
     do
         if [[ \$sample_id != "sample_id" ]]; then
             echo "\$assembly_path\t\$sample_id.gff\tdraft" >> ${output_file}
         fi
-    done < ${params.manifest}
+    done < "${manifest_ch}"
     """
 }
 
@@ -75,7 +75,7 @@ process AnnotateKmers {
 
     script:
     """
-    annotate_hits_pyseer ${sig_kmer} ${reftxt} annotated_kmers.tsv
+    annotate_hits_pyseer "${sig_kmer}" "${reftxt}" annotated_kmers.tsv
     summarise_annotations.py annotated_kmers.tsv > gene_hits.tsv
     """
 }
