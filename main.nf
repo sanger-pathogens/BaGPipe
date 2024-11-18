@@ -51,11 +51,6 @@ def printHelp() {
     """.stripIndent()
 }
 
-if (params.help) {
-    printHelp()
-    exit(0)
-}
-
 
 /*
 ========================================================================================
@@ -102,6 +97,12 @@ validate_parameters()
 */
 
 workflow {
+    // Print help message if needed
+    if (params.help) {
+        printHelp()
+        exit(0)
+    }
+
     // Parse assembly manifest
     manifest_ch = Channel.fromPath(params.manifest)
 
