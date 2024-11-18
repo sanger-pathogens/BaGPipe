@@ -109,7 +109,7 @@ workflow {
 
     pheno = Channel.fromPath(params.phenotypes)
 
-    if (params.mytree) {
+    if (params.mytree && params.mygff) {
         tree = Channel.fromPath(params.mytree)
 
         gff_files = Channel.fromPath(params.mygff)
@@ -117,31 +117,36 @@ workflow {
             .map { row -> tuple(row.sample_id, row.ann_genome_path) }
             .map { it -> it[1] }
             .collect()
+    } else if (params.mygff) {
+        gff_files = Channel.fromPath(params.mygff)
+            .splitCsv(header: true, sep: ',')
+            .map { row -> tuple(row.sample_id, row.ann_genome_path) }
+            .map { it -> it[1] }
+            .collect()
+
+        PanarooAnalysis(gff_files)
+        alignment = PanarooAnalysis.out.panaroo_output_core_aln
+
+        PhylogeneticAnalysis(alignment)
+        tree = PhylogeneticAnalysis.out.phylo_tree
+    } else if (params.mytree) {
+        tree = Channel.fromPath(params.mytree)
+
+        ProkkaAnnotate(genomes_ch)
+        gff_files = ProkkaAnnotate.out.prokka_output_gff
+            .map { it -> it[1] }
+            .collect()
     } else {
-        if (params.mygff) {
-            gff_files = Channel.fromPath(params.mygff)
-                .splitCsv(header: true, sep: ',')
-                .map { row -> tuple(row.sample_id, row.ann_genome_path) }
-                .map { it -> it[1] }
-                .collect()
+        ProkkaAnnotate(genomes_ch)
+        gff_files = ProkkaAnnotate.out.prokka_output_gff
+            .map { it -> it[1] }
+            .collect()
 
-            PanarooAnalysis(gff_files)
-            alignment = PanarooAnalysis.out.panaroo_output_core_aln
+        PanarooAnalysis(gff_files)
+        alignment = PanarooAnalysis.out.panaroo_output_core_aln
 
-            PhylogeneticAnalysis(alignment)
-            tree = PhylogeneticAnalysis.out.phylo_tree
-        } else {
-            ProkkaAnnotate(genomes_ch)
-            gff_files = ProkkaAnnotate.out.prokka_output_gff
-                .map { it -> it[1] }
-                .collect()
-
-            PanarooAnalysis(gff_files)
-            alignment = PanarooAnalysis.out.panaroo_output_core_aln
-
-            PhylogeneticAnalysis(alignment)
-            tree = PhylogeneticAnalysis.out.phylo_tree
-        }
+        PhylogeneticAnalysis(alignment)
+        tree = PhylogeneticAnalysis.out.phylo_tree
     }
 
     if (params.genotype_method == "pa") {
