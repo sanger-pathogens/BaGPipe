@@ -5,7 +5,7 @@ log.info """\
     ==========================
     genus: ${params.genus}
     phenotypes: ${params.phenotypes}
-    antibiotic: ${params.antibiotic} 
+    antibiotic: ${params.antibiotic}
     genotype_method: ${params.genotype_method}
     """
     .stripIndent()
@@ -26,8 +26,8 @@ def printHelp() {
       --manifest                   Manifest containing paths to FASTA files (mandatory)
       --phenotypes                 A tab file containing phenotypes for all samples (mandatory)
       --genus                      Genus name for samples (mandatory if starting from FASTA files)
-      --genotype_method		   Genotype method to run GWAS, from a choice of three (unitig|pa|snp) (mandatory)
-                   Note: unitig is recommended.
+      --genotype_method            Genotype method to run GWAS, from a choice of three (unitig|pa|snp) (mandatory)
+                                   Note: unitig is recommended.
       --reference                  Manifest containing paths to reference FASTA and GFF files (mandatory for significant k-mer/unitig analysis)
       --mygff                      Input a manifest containing paths to already annotated GFF files; must match sample_ids in manifest (optional)
       --mytree                     Input user preferred phylogenetic tree (optional)
@@ -38,15 +38,15 @@ def printHelp() {
     Alternative Options for Some Processes:
 
     [PanarooAnalysis]
-      --panaroo_clean_mode	   Default: "strict"
-      --panaroo_alignment	   Default: "core"
-      --panaroo_aligner		   Default: "mafft"
-      --panaroo_core_threshold     Default: 0.95
+      --panaroo_clean_mode       Default: "strict"
+      --panaroo_alignment        Default: "core"
+      --panaroo_aligner          Default: "mafft"
+      --panaroo_core_threshold   Default: 0.95
     [PhylogeneticAnalysis]
-      --iqtree_model		   Default: "GTR"
+      --iqtree_model             Default: "GTR"
     [Pyseer]
-      --pyseer_min_af		   Default: 0.01
-      --pyseer_max_af		   Default: 0.99
+      --pyseer_min_af            Default: 0.01
+      --pyseer_max_af            Default: 0.99
 
     """.stripIndent()
 }
@@ -74,9 +74,18 @@ include { PyseerKinshipMatrix } from './modules/PyseerKinshipMatrix'
 include { UnitigCaller } from './modules/UnitigCaller'
 include { MergeVCF } from './modules/MergeVCF'
 include { PyseerGenotypeMatrix } from './modules/PyseerGenotypeMatrix'
-include { PyseerUnitig; PyseerPreAbs; PyseerVariants } from './modules/Pyseer'
-include { SignificantKmers; KmerMap; WriteReferenceText; AnnotateKmers; GeneHitPlot} from './modules/SignificantKmerAnalysis'
-
+include {
+    PyseerUnitig;
+    PyseerPreAbs;
+    PyseerVariants
+} from './modules/Pyseer'
+include {
+    SignificantKmers;
+    KmerMap;
+    WriteReferenceText;
+    AnnotateKmers;
+    GeneHitPlot
+} from './modules/SignificantKmerAnalysis'
 
 /*
 ========================================================================================
@@ -96,82 +105,73 @@ workflow {
     manifest_ch = Channel.fromPath(params.manifest)
 
     genomes_ch = manifest_ch.splitCsv(header: true, sep: ',')
-    .map{ row -> tuple(row.sample_id, row.assembly_path) }
+    .map { row -> tuple(row.sample_id, row.assembly_path) }
 
     pheno = Channel.fromPath(params.phenotypes)
 
-
     if (params.mytree) {
         tree = Channel.fromPath(params.mytree)
-        
-    gff_files = Channel.fromPath(params.mygff)
+
+        gff_files = Channel.fromPath(params.mygff)
             .splitCsv(header: true, sep: ',')
-            .map{ row -> tuple(row.sample_id, row.ann_genome_path) }
-            .map{ it -> it[1] }
+            .map { row -> tuple(row.sample_id, row.ann_genome_path) }
+            .map { it -> it[1] }
             .collect()
-    }
-    else {
+    } else {
         if (params.mygff) {
             gff_files = Channel.fromPath(params.mygff)
                 .splitCsv(header: true, sep: ',')
-                .map{ row -> tuple(row.sample_id, row.ann_genome_path) }
-                .map{ it -> it[1] }
+                .map { row -> tuple(row.sample_id, row.ann_genome_path) }
+                .map { it -> it[1] }
                 .collect()
-    
+
             PanarooAnalysis(gff_files)
             alignment = PanarooAnalysis.out.panaroo_output_core_aln
 
             PhylogeneticAnalysis(alignment)
             tree = PhylogeneticAnalysis.out.phylo_tree
-        }
-        else {
+        } else {
             ProkkaAnnotate(genomes_ch)
             gff_files = ProkkaAnnotate.out.prokka_output_gff
                 .map { it -> it[1] }
                 .collect()
-            
+
             PanarooAnalysis(gff_files)
             alignment = PanarooAnalysis.out.panaroo_output_core_aln
-            
+
             PhylogeneticAnalysis(alignment)
             tree = PhylogeneticAnalysis.out.phylo_tree
         }
     }
 
-
-    if (params.genotype_method == "pa"){
+    if (params.genotype_method == "pa") {
         PyseerKinshipMatrix(tree)
         k_matrix = PyseerKinshipMatrix.out.kinship_matrix
         pre_abs = PanarooAnalysis.out.panaroo_output_pre_abs
 
         PyseerPreAbs(pre_abs,pheno,k_matrix)
-    }
-    else if (params.genotype_method == "snp"){
-        if (params.mvcf){
+    } else if (params.genotype_method == "snp") {
+        if (params.mvcf) {
             // But currently this has a problem: Must use distance matrix with fixed effects (SEER)
-            // This is the classifical way of using MDS 
-            // Distance matrix needs mash (1); or we could extract patristic distances from a phylogeny (2). 
+            // This is the classifical way of using MDS
+            // Distance matrix needs mash (1); or we could extract patristic distances from a phylogeny (2).
                 // 1>> mash sketch -s 10000 -o samples *.fa \ mash dist samples.msh samples.msh | square_mash > mash.tsv
                 // 2>> python scripts/phylogeny_distance.py core_genome.tree > phylogeny_distances.tsv
             // But, we can use core_gene VCF to generate kinship matrix and use FaST-LMM model?
                 // similarity_pyseer --vcf core_gene_snps.vcf sample_list.txt > genotype_kinship.tsv
-            if (params.fe){
+            if (params.fe) {
                 // fixed effect way of doing GWAS
-            }
-            else {
+            } else {
                 variants = Channel.fromPath(params.mvcf)
                 PyseerGenotypeMatrix(variants, manifest_ch)
                 k_matrix = PyseerGenotypeMatrix.out.kinship_matrix
                 PyseerVariants(variants,pheno,k_matrix)
             }
-            
-        }
-        else {
+        } else {
             // Either use snippy to call variant from fasta, given a reference, then use Process: MergeVCF
             // Or ask user to input another manifest containing directory of all vcf, then use Process: MergeVCF
         }
-    }    
-    else if (params.genotype_method == "unitig"){
+    } else if (params.genotype_method == "unitig") {
         PyseerKinshipMatrix(tree)
         k_matrix = PyseerKinshipMatrix.out.kinship_matrix
 
@@ -184,31 +184,25 @@ workflow {
         SignificantKmers(pyseer_result)
         sig_kmer = SignificantKmers.out.sig_kmer_out
 
-        if (params.reference){
-    
-        ref_manifest_ch = Channel.fromPath(params.reference)
-        
-        ref_ch = ref_manifest_ch.splitCsv(header: false, sep:"\t")
-                .map{ row -> tuple(row[0], row[1]) }
-            .combine(sig_kmer)
-            
-        KmerMap(ref_ch)
+        if (params.reference) {
 
-            WriteReferenceText(manifest_ch,ref_manifest_ch)
-            reftxt = WriteReferenceText.out.write_ref_text_out
+            ref_manifest_ch = Channel.fromPath(params.reference)
 
-            AnnotateKmers(sig_kmer,reftxt,gff_files)
-            genehit = AnnotateKmers.out.annotated_kmers_out
+            ref_ch = ref_manifest_ch.splitCsv(header: false, sep:"\t")
+                    .map{ row -> tuple(row[0], row[1]) }
+                .combine(sig_kmer)
 
-            GeneHitPlot(genehit)
+            KmerMap(ref_ch)
+
+                WriteReferenceText(manifest_ch,ref_manifest_ch)
+                reftxt = WriteReferenceText.out.write_ref_text_out
+
+                AnnotateKmers(sig_kmer,reftxt,gff_files)
+                genehit = AnnotateKmers.out.annotated_kmers_out
+
+                GeneHitPlot(genehit)
+        }
+    } else {
+        println "Please use a correct genotype method (unitig|pa|snp)."
     }
-    }
-    else {
-    println "Please use a correct genotype method (unitig|pa|snp)."
-    }
-
-    
-    
 }
-
-
