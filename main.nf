@@ -136,13 +136,17 @@ workflow {
         tree = PhylogeneticAnalysis.out.phylo_tree
     }
 
+    // Presence/Absence approach
     if (params.genotype_method == "pa") {
         PyseerKinshipMatrix(tree)
         k_matrix = PyseerKinshipMatrix.out.kinship_matrix
         pre_abs = PanarooAnalysis.out.panaroo_output_pre_abs
 
-        PyseerPreAbs(pre_abs,pheno,k_matrix)
-    } else if (params.genotype_method == "snp") {
+        PyseerPreAbs(pre_abs, pheno, k_matrix)
+    }
+    
+    // SNP-based approach
+    if (params.genotype_method == "snp") {
         if (params.mvcf) {
             // But currently this has a problem: Must use distance matrix with fixed effects (SEER)
             // This is the classifical way of using MDS
@@ -163,38 +167,39 @@ workflow {
             // Either use snippy to call variant from fasta, given a reference, then use Process: MergeVCF
             // Or ask user to input another manifest containing directory of all vcf, then use Process: MergeVCF
         }
-    } else if (params.genotype_method == "unitig") {
+    }
+    
+    // Unitig approach
+    if (params.genotype_method == "unitig") {
         PyseerKinshipMatrix(tree)
         k_matrix = PyseerKinshipMatrix.out.kinship_matrix
 
         UnitigCaller(manifest_ch)
         unitig = UnitigCaller.out.unitig_out
 
-        PyseerUnitig(unitig,pheno,k_matrix)
+        PyseerUnitig(unitig, pheno, k_matrix)
         pyseer_result = PyseerUnitig.out.pyseer_out
 
         SignificantKmers(pyseer_result)
         sig_kmer = SignificantKmers.out.sig_kmer_out
+    }
 
-        if (params.reference) {
+    // Annotate reference with significant kmers
+    if (params.reference) {
+        ref_manifest_ch = Channel.fromPath(params.reference)
 
-            ref_manifest_ch = Channel.fromPath(params.reference)
+        ref_ch = ref_manifest_ch.splitCsv(header: false, sep:"\t")
+            .map { row -> tuple(row[0], row[1]) }
+            .combine(sig_kmer)
 
-            ref_ch = ref_manifest_ch.splitCsv(header: false, sep:"\t")
-                    .map{ row -> tuple(row[0], row[1]) }
-                .combine(sig_kmer)
+        KmerMap(ref_ch)
 
-            KmerMap(ref_ch)
+        WriteReferenceText(manifest_ch, ref_manifest_ch)
+        reftxt = WriteReferenceText.out.write_ref_text_out
 
-                WriteReferenceText(manifest_ch,ref_manifest_ch)
-                reftxt = WriteReferenceText.out.write_ref_text_out
+        AnnotateKmers(sig_kmer, reftxt, gff_files)
+        genehit = AnnotateKmers.out.annotated_kmers_out
 
-                AnnotateKmers(sig_kmer,reftxt,gff_files)
-                genehit = AnnotateKmers.out.annotated_kmers_out
-
-                GeneHitPlot(genehit)
-        }
-    } else {
-        println "Please use a correct genotype method (unitig|pa|snp)."
+        GeneHitPlot(genehit)
     }
 }
