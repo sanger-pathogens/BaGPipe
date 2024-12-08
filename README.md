@@ -1,14 +1,23 @@
 # BaGPipe
-_Please bear with me that this manual is still a work in progress. Some paragraphs in this documentation are adapted from my unpublished masters' thesis, so please remember to cite this repository for now._
 
 ## Overview
-Running a bacterial GWAS isn't that hard, but the pre- and post-processing of data can be boring. I understand the computational complexities ranging from data format conversions to the handling of large genomic datasets. These tasks took precious time away from you, and sometimes bring in small errors that impact the reliability of results. The BaGPipe pipeline integrates a series of bioinformatic tools into a standard, tested workflow for performing bacterial GWAS (see Figure below). 
+Running a bacterial GWAS isn't that hard, but the pre- and post-processing of data can be boring. In particular, a user must contend with data conversions, estimation of computational resource requirements and waiting for one process to finish before another can start. These tasks take precious time away from you, and sometimes bring in small errors that impact the reliability of results.
+
+**BaGPipe** is a nextflow pipeline that integrates a series of bioinformatic tools into a standard, tested workflow for performing bacterial GWAS on large datasets (see Figure below). 
 
 ![Flowchart describing the pipeline](images/bgwas_pipeline_0422.drawio.png)
 
-The most comprehensive way of running BaGPipe starts with genome assemblies, where it performs automated pre-processing including the generation of k-mers (short DNA sequences of length k) or unitigs (longer, non-overlapping sequences assembled from k-mers), annotated assemblies, pangenome, core phylogenetic tree, and the distance/pairwise matrix. Users have the flexibility to enter the workflow at alternative starting points in the pre-processing stage, e.g. supplying their own tree.
+## What does it do?
 
-For the association analysis, Pyseer (Lees et al, 2018) was used for its speed and design in addressing the common problems of bacterial GWAS like population strucutre, recombination rate, and multiple testing. In the current version (v1.0.0), BaGPipe supports the recommended option (by the Pyseer authors), using a linear mixed model algorithm and unitigs as the input genotype.
+The most comprehensive way of running BaGPipe starts with only genome assemblies. In this mode, it generates all other data required as input for bacterial GWAS by:
+- Creating k-mers (short DNA sequences of length k) or unitigs (longer, non-overlapping sequences assembled from k-mers)
+- Annotating assemblies
+- Performing a pangenome analysis and creating a core phylogenetic tree
+- Generating a pairwise distance matrix 
+
+Users have the flexibility to enter the workflow at alternative starting points in this pre-processing stage, e.g. supplying their own tree.
+
+For the association analysis, Pyseer (Lees et al, 2018) was used for its speed and design in addressing the common problems of bacterial GWAS like population strucutre, recombination rate, and multiple testing. By default, BaGPipe uses of a linear mixed model algorithm and unitigs as the input genotype (options recommended by Pyseer authors).
 
 In the post-processing stage, BaGPipe automatically performs significant unitig analysis. If the user provides reference files, it can conveniently produce Manhattan plots, annotate the significant unitigs, and eventually produce a gene-hit plot. 
 
@@ -18,13 +27,19 @@ BaGPipe facilitates GWAS analysis on large datasets by easing the computational 
 ## Getting started 
 
 ### Setting up
-You can clone from this repository. You need to have Nextflow. You shouldn't need to set up specific containers for any of the processes used in this pipeline. 
+Install Java and Nextflow via https://www.nextflow.io/docs/latest/install.html.
 
 ### Example command
-BaGPipe is very simple to run under Nextflow. You just need to understand the input required (see Inputs below). I have provided some example input data in the folder "example_input" on this repository. In your command line interface, you can execute BaGPipe after the set-up by something like: 
+Running BaGPipe is easy! You just need to specify a few input files (see [Inputs](#inputs) below). Some example input is provided in the [example_input](./example_input) folder. These example inputs will work with the below commands, provided assemblies available in the [Pyseer tutorial](https://pyseer.readthedocs.io/en/master/tutorial.html) are downloaded and paths in the inputs updated accordingly.
+
+Different configuration profiles can be specified depending on the compute environment in which BaGPipe is run. In most cases, BaGPipe should be run in an HPC environment, but these environments are specific to host institutions. To run BaGPipe with an nf-core profile appropriate for your institution, find a config file [here](https://github.com/nf-core/configs/tree/master/conf) and add a line for the raw config file to [profiles.config](./profiles.config).
+
+If you need to make code changes it may be better to clone this repository and run the pipeline using `nextflow run main.nf`, instead of pulling directly from GitHub (as in the example command below).
+
+The profiles for Sanger have been set up by default, so to run on the Sanger HPC, using singularity to handle pipeline dependencies:
 ```
-bsub -o job_reports/test1.o -e job_reports/test1.e \
-  nextflow run ../gwas_pipeline/main.nf \
+bsub -q oversubscribed -M 4000 -R "rusage[mem=4000] select[mem>4000]" -o test.o -e test.e \
+  nextflow run sanger-pathogens/BaGPipe \
     -profile sanger,singularity \
     --manifest genome_manifest.csv \
     --genotype_method unitig \
@@ -34,12 +49,18 @@ bsub -o job_reports/test1.o -e job_reports/test1.e \
     --antibiotic penicillin \
     -resume
 ```
-There are more parameters options and you can explore in the help message (by '-help'). 
 
-### Execution and error handling
-The user can run the pipeline using a command line interface, where they need to provide parameters and a configuration file. In case a configuration file is specified, the user must establish the paths for all input files and define the specific analysis along with its related parameters. Alternatively, the user can produce a CSV file (“manifest”) containing the directory paths to all the required input sources and use the default configuration file. The execution can be conducted either locally or expanded to various high-performance computing (HPC) platforms. 
+For more options, please explore in the help message (using `--help`).
 
-In case of any error during a run, the user can rectify the error and restart the pipeline using the “-resume” command. In doing so, the pipeline utilises previously stored cached files from the last run and proceeds with the corrected processes, without the need to re-run everything again from the top. 
+### Execution and Caching
+
+Users can supply parameters to the pipeline in two ways, via:
+- Command Line Interface (CLI), as shown in the [example command](#example-command).
+- Nextflow configuration file (similar to [nextflow.config](./nextflow.config))
+
+If a configuration file is specified, the user must establish the paths for all input files and define the specific analysis along with its related parameters. 
+
+In case of any error during a run, the user can rectify the error and restart the pipeline using the `-resume` nextflow option. Doing so utilises cached files from the last run, without the need to re-run everything again from the top.
 
 ## Inputs
 
@@ -48,7 +69,7 @@ The user must specify, through the option `--genotype_method`, one of the three 
 2. gene presence or absence (`pa`)
 3. SNPs and INDELs (Insertions and Deletions) (`snp`)
 
-If unsure, I recommend the `unitig` approach, as it is a recommended approach by the Pyseer authors. Currently, the unitig option is fully tested but the others are incomplete.
+If unsure, I recommend the `unitig` approach, as it is the approach recommended by the Pyseer authors. Currently, the `unitig` option is fully tested but the others are incomplete.
 
 | Input Type        | Format                                                                | Use Case                                                                                        |
 |-------------------|-----------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
@@ -74,9 +95,9 @@ Panaroo outputs several files, including the gene presence/absence format and co
 To control for population structure in the downstream association study, BaGPipe uses IQ-TREE (v.2.2.6) (Nguyen et al, 2015) to build a phylogeny from the core gene alignment. IQ-TREE is a fast stochastic algorithm which constructs phylogenetic trees using a maximum likelihood method. It employs a fast hill-climbing nearest neighbour interchange (NNI) algorithm to generate initially optimal trees, retaining the best topologies based on likelihood. Following this, a stochastic NNI step perturbs these selected trees, allowing for potential escape from local optima. The algorithm re-applies hill-climbing NNI to perturbed trees, iteratively refining them. This recursive process continues until the algorithm identifies the best tree, which remains unchanged through 100 random perturbations. BaGPipe selectively stores the “.treefile” file into a channel for downstream processes.
 
 IQ-TREE generates multiple output files, including: 
-1.	“.iqtree”: The primary report file which provides detailed computational results and a text-based representation of the final tree. The user can examine this file to understand the outcomes of the run.
-2.	“.treefile”: The maximum likelihood tree in NEWICK format, which can be viewed in a tree viewer program that supports the format, such as FigTree or iTOL. 
-3.	“.log”: A log file which records the entire process of the run
+1.	`*.iqtree`: The primary report file which provides detailed computational results and a text-based representation of the final tree. The user can examine this file to understand the outcomes of the run.
+2.	`*.treefile`: The maximum likelihood tree in NEWICK format, which can be viewed in a tree viewer program that supports the format, such as FigTree or iTOL. 
+3.	`*.log`: A log file which records the entire process of the run
 
 ### 4. Association study
 BaGPipe uses Pyseer (v.1.3.11), a non-phylogenetic method and a Python implementation of SEER, to perform GWAS using a linear mixed model. BaGPipe adapts the flexibility given by Pyseer so that the user can choose their preferred methods for doing the association study.
