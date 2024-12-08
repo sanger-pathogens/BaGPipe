@@ -3,7 +3,7 @@ process UnitigCaller {
     container "quay.io/biocontainers/unitig-counter:1.1.0--h56fc30b_0"
 
     input:
-    path manifest_ch 
+    path manifest
 
     output:
     path "*", emit: unitig_all
@@ -11,11 +11,11 @@ process UnitigCaller {
 
     script:
     """
-    cat ${params.manifest} | tr ',' '\t' > assemblies_list.txt
-    unitig-counter \
-        -strains assemblies_list.txt \
-        -output output \
-        -nb-cores ${task.cpus} 
+    cat ${manifest} | tr ',' '\t' > assemblies_list.txt
+    unitig-counter \\
+        -strains assemblies_list.txt \\
+        -output output \\
+        -nb-cores ${task.cpus}
     gzip output/unitigs.txt
     """
 }
