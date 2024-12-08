@@ -43,7 +43,10 @@ def printHelp() {
       --panaroo_aligner          Default: "mafft"
       --panaroo_core_threshold   Default: 0.95
     [PhylogeneticAnalysis]
-      --iqtree_model             Default: "GTR"
+      --iqtree_model             Evolutionary model that will be used by IQTree. Default: "GTR"
+      --iqtree_bootstrap_trees   Number of bootstrap trees to use. Default: 1000
+      --iqtree_seed              Random seed to ensure pipeline runs are deterministic. Default: 1234
+      --iqtree_args              String supplying additional IQtree options. Incompatible with the following (reserved for use by this pipeline): -pre, -fconst, -s, -nt, -ntmax, -mem, -bb, -m, -seed. Default: ""
     [Pyseer]
       --pyseer_min_af            Default: 0.01
       --pyseer_max_af            Default: 0.99
