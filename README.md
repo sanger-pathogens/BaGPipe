@@ -32,11 +32,9 @@ Install Java and Nextflow via https://www.nextflow.io/docs/latest/install.html.
 ### Example command
 Running BaGPipe is easy! You just need to specify a few input files (see [Inputs](#inputs) below). Some example input is provided in the [example_input](./example_input) folder. These example inputs will work with the below commands, provided assemblies available in the [Pyseer tutorial](https://pyseer.readthedocs.io/en/master/tutorial.html) are downloaded and paths in the inputs updated accordingly.
 
-Different configuration profiles can be specified depending on the compute environment in which BaGPipe is run. In most cases, BaGPipe should be run in an HPC environment, but these environments are specific to host institutions. To run BaGPipe with an nf-core profile appropriate for your institution, find a config file [here](https://github.com/nf-core/configs/tree/master/conf) and add a line for the raw config file to [profiles.config](./profiles.config).
+Different configuration profiles can be specified depending on the compute environment in which BaGPipe is run. In most cases, BaGPipe should be run in an HPC environment, but these environments are specific to host institutions. To run BaGPipe with an nf-core profile appropriate for your institution, find a config file [here](https://github.com/nf-core/configs/tree/master/conf). If a config file exists for your institution, run it using `-profile <institution>`. Different profiles can be combined in a list, with later profiles overriding previous ones.
 
-If you need to make code changes it may be better to clone this repository and run the pipeline using `nextflow run main.nf`, instead of pulling directly from GitHub (as in the example command below).
-
-The profiles for Sanger have been set up by default, so to run on the Sanger HPC, using singularity to handle pipeline dependencies:
+For instance to run on the Sanger HPC, using singularity to handle pipeline dependencies:
 ```
 bsub -q oversubscribed -M 4000 -R "rusage[mem=4000] select[mem>4000]" -o test.o -e test.e \
   nextflow run sanger-pathogens/BaGPipe \
@@ -49,6 +47,8 @@ bsub -q oversubscribed -M 4000 -R "rusage[mem=4000] select[mem>4000]" -o test.o 
     --antibiotic penicillin \
     -resume
 ```
+
+If you would like to make code changes it may be better to clone this repository and run the pipeline using `nextflow run main.nf`, instead of pulling directly from GitHub (as in the example command above).
 
 For more options, please explore in the help message (using `--help`).
 
