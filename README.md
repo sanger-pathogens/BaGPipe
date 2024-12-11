@@ -34,6 +34,8 @@ Running BaGPipe is easy! You just need to specify a few input files (see [Inputs
 
 Different configuration profiles can be specified depending on the compute environment in which BaGPipe is run. In most cases, BaGPipe should be run in an HPC environment, but these environments are specific to host institutions. To run BaGPipe with an nf-core profile appropriate for your institution, find a config file [here](https://github.com/nf-core/configs/tree/master/conf). If a config file exists for your institution, run it using `-profile <institution>`. Different profiles can be combined in a list, with later profiles overriding previous ones.
 
+You can also enable different methods for dependency management using profiles. Currently supported profiles for this purpose include: `singularity` and `docker`.
+
 For instance to run on the Sanger HPC, using singularity to handle pipeline dependencies:
 ```
 bsub -q oversubscribed -M 4000 -R "rusage[mem=4000] select[mem>4000]" -o test.o -e test.e \
