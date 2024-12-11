@@ -142,6 +142,8 @@ A Docker container has been developed to facilitate the installation of all esse
 A single default configuration file is supplied, encompassing all options and parameters for BaGPipe. The user can tailor this file for conducting specific analyses. To simplify the experience for users at all levels of programming knowledge, the configuration file limits modifications to only key parameters. However, experienced users have the option to alter any parameter by changing the source code. Additionally, the user can edit the profile configuration file to run BaGPipe matching the resource settings of their institution’s HPC platform (https://nf-co.re/configs).
 
 ## Credits
-Pyseer is developed by the Dr. John Lees' team. I would like to thank them for making this amazing tool available. Documentation: https://pyseer.readthedocs.io/en/master
+This pipeline is developed and co-maintained by Charles Wei as part of a Project for Systems Biology at the University of Cambridge. Ewan Harrison, Dinesh Aggarwal, and William Roberts-Sengier supervised the project and provided ideas on pipeline design, implementation and testing.
 
-I am supervised by Dr. Ewan Harrison, Dinesh Aggarwal, and William Roberts-Sengier. They are main contributors to ideas in this project. 
+[Pyseer](https://github.com/mgalardini/pyseer), developed and maintained by [Marco Galardini](https://github.com/mgalardini) and [John Lees](https://github.com/johnlees), along with it's accompanying documentation proved invaluable to the development of the pipeline. We thank them for making this amazing tool available!
+
+Thanks must also go to Beth Blane, who curated and provided the *Staphylococcus aureus* dataset used in testing the pipeline.
