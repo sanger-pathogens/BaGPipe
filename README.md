@@ -23,11 +23,24 @@ In the post-processing stage, BaGPipe automatically performs significant unitig 
 
 BaGPipe facilitates GWAS analysis on large datasets by easing the computational burden. It optimises the use of requested memory and CPU, which can be customised if necessary. Additionally, an automated resource escalation strategy ensures that a process will be re-run with higher resource requests if the process failed due to lack of memory or runtime on an HPC cluster node.
 
+## Requirements
 
-## Getting started 
+### Software
 
-### Setting up
-Install Java and Nextflow via https://www.nextflow.io/docs/latest/install.html.
+- A Unix-like operating system environment (e.g. Linux, macOS, Windows with [WSL](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux)) with Bash 3.2 or later.
+- Java 11 or later ([OpenJDK](https://openjdk.org/)) as a nextflow dependency
+- [nextflow](https://www.nextflow.io/) as workflow management system
+- [Docker](https://www.docker.com/) or [Singularity](https://sylabs.io/singularity/) for pipeline dependency management
+
+> NOTE: Java and Nextflow can be installed with instructions on https://www.nextflow.io/docs/latest/install.html.
+
+### Hardware (recommended)
+
+- \>= 16GB RAM
+- \>= 2 CPUs/cores
+- Enough space for images (< 10GB) and intermediate data
+
+## Getting started
 
 ### Example command
 Running BaGPipe is easy! You just need to specify a few input files (see [Inputs](#inputs) below). Some example input is provided in the [example_input](./example_input) folder. These example inputs will work with the below commands, provided assemblies available in the [Pyseer tutorial](https://pyseer.readthedocs.io/en/master/tutorial.html) are downloaded and paths in the inputs updated accordingly.
