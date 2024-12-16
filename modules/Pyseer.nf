@@ -1,6 +1,6 @@
 process PyseerUnitig {
     publishDir "${params.outdir}/pyseer", mode: 'copy', overwrite: true
-    container "quay.io/rositea/tea"
+    container "quay.io/sangerpathogens/pyseer:1.3.11"
 
     input:
     path unitig
@@ -29,7 +29,7 @@ process PyseerUnitig {
 
 process PyseerVariants {
     publishDir "${params.outdir}/pyseer", mode: 'copy', overwrite: true
-    container "quay.io/rositea/tea"
+    container "quay.io/sangerpathogens/pyseer:1.3.11"
 
     input:
     path variants
@@ -58,7 +58,7 @@ process PyseerVariants {
 
 process PyseerPreAbs {
     publishDir "${params.outdir}/pyseer", mode: 'copy', overwrite: true
-    container "quay.io/rositea/tea"
+    container "quay.io/sangerpathogens/pyseer:1.3.11"
 
     input:
     path pre_abs

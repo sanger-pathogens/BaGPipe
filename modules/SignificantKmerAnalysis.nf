@@ -19,7 +19,7 @@ process SignificantKmers {
 process KmerMap {
     tag "${fasta}"
     publishDir "${params.outdir}/significant_unitigs/Manhattan", mode: 'copy', overwrite: true
-    container "quay.io/rositea/tea"
+    container "quay.io/sangerpathogens/pyseer:1.3.11"
 
     input:
     tuple path(fasta), path(gff), path(sig_kmer)
@@ -63,7 +63,7 @@ process WriteReferenceText {
 
 process AnnotateKmers {
     publishDir "${params.outdir}/annotated_unitigs", mode: 'copy', overwrite: true
-    container "quay.io/rositea/tea"
+    container "quay.io/sangerpathogens/pyseer:1.3.11"
 
     input:
     path sig_kmer
