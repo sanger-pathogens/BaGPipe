@@ -11,7 +11,7 @@ process BaktaAnnotate {
 
     output:
     tuple val(sample_id), path("${sample_id}"), emit: bakta_output
-    tuple val(sample_id), path("${sample_id}/*.gff"), emit: bakta_output_gff
+    tuple val(sample_id), path("${sample_id}/*.gff3"), emit: bakta_output_gff
 
     script:
     amended_id = "${sample_id}".replaceAll(/[^\w.-]/, '_')
