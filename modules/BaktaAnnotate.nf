@@ -7,7 +7,7 @@ process BaktaAnnotate {
     publishDir "${params.outdir}/bakta", mode:'copy', overwrite: true
 
     input:
-    tuple val(sample_id), path(assembly_path)
+    tuple val(sample_id), path(assembly_path), path(bakta_db)
 
     output:
     tuple val(sample_id), path("${sample_id}"), emit: bakta_output
@@ -24,7 +24,7 @@ process BaktaAnnotate {
         --output ${sample_id} \\
         --prefix ${amended_id} \\
         --locus-tag ${amended_id} \\
-        --db ${params.bakta_db} \\
+        --db ${bakta_db} \\
         --keep-contig-headers
 
     # Remove non-ASCII characters from GFF

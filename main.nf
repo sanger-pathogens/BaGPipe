@@ -28,6 +28,7 @@ def printHelp() {
       --genus                      Genus name for samples (mandatory if starting from FASTA files)
       --genotype_method            Genotype method to run GWAS, from a choice of three (unitig|pa|snp) (mandatory)
                                    Note: unitig is recommended.
+      --annotation_method          Tool to use for annotation (prokka|bakta). Default: bakta. (optional)
       --reference                  Manifest containing paths to reference FASTA and GFF files (mandatory for significant k-mer/unitig analysis)
       --mygff                      Input a manifest containing paths to already annotated GFF files; must match sample_ids in manifest (optional)
       --mytree                     Input user preferred phylogenetic tree (optional)
@@ -66,6 +67,7 @@ def printHelp() {
 //
 include { validate_parameters } from './modules/helper_functions'
 include { ProkkaAnnotate } from './modules/ProkkaAnnotate'
+include { BaktaAnnotate } from './modules/BaktaAnnotate'
 include { PanarooAnalysis } from './modules/PanarooAnalysis'
 include { PhylogeneticAnalysis } from './modules/PhylogeneticAnalysis'
 include { PyseerKinshipMatrix } from './modules/PyseerKinshipMatrix'
@@ -120,14 +122,22 @@ workflow {
         gff_files = Channel.fromPath(params.mygff)
             .splitCsv(header: true, sep: ',')
             .map { row -> tuple(row.sample_id, row.ann_genome_path) }
-            .map { it -> it[1] }
-            .collect()
     } else {
-        ProkkaAnnotate(genomes_ch)
-        gff_files = ProkkaAnnotate.out.prokka_output_gff
-            .map { it -> it[1] }
-            .collect()
+        if (params.annotation_method == "prokka") {
+            ProkkaAnnotate(genomes_ch)
+            gff_files = ProkkaAnnotate.out.prokka_output_gff
+        } else if (params.annotation_method == "bakta") {
+            bakta_db = Channel.fromPath(params.bakta_db, checkIfExists: true)
+            bakta_input = genomes_ch.combine(bakta_db)
+            BaktaAnnotate(bakta_input)
+            gff_files = BaktaAnnotate.out.bakta_output_gff
+        } else {
+            throw new Exception("Unknown annotator passed to `--annotation_method`. Please choose from: bakta, prokka")
+        }
     }
+    gff_files = gff_files
+        .map { it -> it[1] }
+        .collect()
 
     // Generate tree if necessary
     if (params.mytree) {
