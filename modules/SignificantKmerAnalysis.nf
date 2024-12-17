@@ -45,19 +45,18 @@ process WriteReferenceText {
 
     script:
     output_file = "references.txt"
-
     """
-    while IFS="\\t" read -r col1 col2
-    do 
-        echo "\${col1}\\t\${col2}\tref" >> ${output_file}
-    done < "${ref_manifest_ch}"
+    while IFS=\$'\\t' read -r col1 col2
+    do
+        echo -e "\${col1}\\t\${col2}\\tref"
+    done < "${ref_manifest_ch}" > "${output_file}"
 
     while IFS=, read -r sample_id assembly_path
     do
-        if [[ \$sample_id != "sample_id" ]]; then
-            echo "\$assembly_path\t\$sample_id.gff\tdraft" >> ${output_file}
+        if [[ \${sample_id} != "sample_id" ]]; then
+            echo -e "\${assembly_path}\\t\${sample_id}.gff\\tdraft"
         fi
-    done < "${manifest_ch}"
+    done < "${manifest_ch}" >> "${output_file}"
     """
 }
 
