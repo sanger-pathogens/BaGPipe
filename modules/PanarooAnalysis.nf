@@ -1,10 +1,10 @@
 // Build a pangenome, including a multiple sequence alignment of core genes (MAFFT), using Panaroo 
 process PanarooAnalysis {
     publishDir "${params.outdir}/panaroo", mode: 'copy', overwrite: true
-    container "quay.io/biocontainers/panaroo:1.3.4--pyhdfd78af_0"
+    container "quay.io/biocontainers/panaroo:1.5.1--pyhdfd78af_0"
 
     input:
-    path gff_files
+    path gff_files, stageAs: 'gffs/*'
 
     output:
     path "panaroo_output", emit: panaroo_out
@@ -14,7 +14,7 @@ process PanarooAnalysis {
     script:
     """
     panaroo \
-        -i *.gff \
+        -i gffs/* \
         -o panaroo_output \
         --clean-mode ${params.panaroo_clean_mode} \
         --remove-invalid-genes \
