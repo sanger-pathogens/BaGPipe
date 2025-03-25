@@ -5,7 +5,7 @@ log.info """\
     ==========================
     genus: ${params.genus}
     phenotypes: ${params.phenotypes}
-    antibiotic: ${params.antibiotic}
+    chosen_phenotype: ${params.chosen_phenotype}
     genotype_method: ${params.genotype_method}
     """
     .stripIndent()
