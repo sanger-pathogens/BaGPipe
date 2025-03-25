@@ -87,13 +87,6 @@ include {
     GeneHitPlot
 } from './modules/SignificantKmerAnalysis'
 
-/*
-========================================================================================
-    VALIDATE INPUTS
-========================================================================================
-*/
-
-validate_parameters()
 
 /*
 ========================================================================================
@@ -107,6 +100,9 @@ workflow {
         printHelp()
         exit(0)
     }
+
+    // Validate inputs
+    validate_parameters()
 
     // Parse assembly manifest
     manifest_ch = Channel.fromPath(params.manifest)
