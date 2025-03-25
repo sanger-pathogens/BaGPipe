@@ -25,6 +25,7 @@ def printHelp() {
 
       --manifest                   Manifest containing paths to FASTA files (mandatory)
       --phenotypes                 A tab file containing phenotypes for all samples (mandatory)
+      --chosen_phenotype           Phenotype to use for the GWAS analysis (mandatory)
       --genus                      Genus name for samples (mandatory if starting from FASTA files)
       --genotype_method            Genotype method to run GWAS, from a choice of three (unitig|pa|snp) (mandatory)
                                    Note: unitig is recommended.
