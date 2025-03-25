@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 log.info """\
-    FASTA - TO - GWAS PIPELINE
+    BAGPIPE PIPELINE PARAMETERS
     ==========================
     genus: ${params.genus}
     phenotypes: ${params.phenotypes}
