@@ -9,10 +9,10 @@ process SignificantKmers {
 
     script:
     """
-    threshold=\$(grep 'Threshold:' kmer_pattern_count_${params.antibiotic}.txt | cut -f2)
-    cat <(head -1 gwas_${params.antibiotic}_kmers.txt) \
+    threshold=\$(grep 'Threshold:' kmer_pattern_count_${params.chosen_phenotype}.txt | cut -f2)
+    cat <(head -1 gwas_${params.chosen_phenotype}_kmers.txt) \
         <(awk -v thresh=\$threshold '\$4<thresh {print \$0}' \
-        gwas_${params.antibiotic}_kmers.txt) > significant_kmers.txt
+        gwas_${params.chosen_phenotype}_kmers.txt) > significant_kmers.txt
     """
 }
 
