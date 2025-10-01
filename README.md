@@ -45,11 +45,11 @@ BaGPipe facilitates GWAS analysis on large datasets by easing the computational 
 ### Example command
 Running BaGPipe is easy! You just need to specify a few input files (see [Inputs](#inputs) below). Some example input is provided in the [example_input](./example_input) folder. These example inputs will work with the below commands, provided assemblies available in the [Pyseer tutorial](https://pyseer.readthedocs.io/en/master/tutorial.html) are downloaded and paths in the inputs updated accordingly. Note: If you try BaGPipe on this _Streptococcus pneumoniae_ dataset you can replicate some analysis I did in my paper ([bioRxiv](https://doi.org/10.1101/2025.02.28.640835))!
 
-Different configuration profiles can be specified depending on the compute environment in which BaGPipe is run. In most cases, BaGPipe should be run in an HPC environment, but these environments are specific to host institutions. To run BaGPipe with an nf-core profile appropriate for your institution, find a config file [here](https://github.com/nf-core/configs/tree/master/conf). If a config file exists for your institution, run it using `-profile <institution>`. Different profiles can be combined in a list, with later profiles overriding previous ones.
+Different configuration profiles can be specified depending on the compute environment in which BaGPipe is run. In most cases, BaGPipe should be run in an HPC environment, but these environments are specific to host institutions. *To run BaGPipe with an nf-core profile appropriate for your institution, find a config file [here](https://github.com/nf-core/configs/tree/master/conf). If a config file exists for your institution, run it using `-profile <institution>`.* Different profiles can be combined in a list, with later profiles overriding previous ones.
 
 You can also enable different methods for dependency management using profiles. Currently supported profiles for this purpose include: `singularity` and `docker`.
 
-For instance to run on an institutional HPC, using singularity to handle pipeline dependencies:
+For instance to run on an HPC, using singularity to handle pipeline dependencies:
 (Remember to update the input file paths according to your customised directory structure.)
 ```
 nextflow run sanger-pathogens/BaGPipe \
