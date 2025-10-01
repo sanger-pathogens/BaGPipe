@@ -49,7 +49,24 @@ Different configuration profiles can be specified depending on the compute envir
 
 You can also enable different methods for dependency management using profiles. Currently supported profiles for this purpose include: `singularity` and `docker`.
 
-For instance to run on the Sanger HPC, using singularity to handle pipeline dependencies:
+For instance to run on an institutional HPC, using singularity to handle pipeline dependencies:
+(Remember to update the input file paths according to your customised directory structure.)
+```
+nextflow run sanger-pathogens/BaGPipe \
+  -c cambridge.config \
+  -profile singularity \
+  --manifest example_input/genome_manifest.csv \
+  --genotype_method unitig \
+  --reference example_input/reference_manifest.tsv \
+  --genus Streptococcus \
+  --phenotypes example_input/pheno.tab \
+  --chosen_phenotype penicillin \
+  --bakta_db rds/databases/bakta_db_v6/db \
+  -resume
+```
+I test ran succesfully on the Cambridge HPC, you can find the profile config that I used in the [example_input](./example_input/cambridge.config).
+
+For people running on the Sanger HPC, you can run like this:
 ```
 bsub -q oversubscribed -M 4000 -R "rusage[mem=4000] select[mem>4000]" -o test.o -e test.e \
   nextflow run sanger-pathogens/BaGPipe \
@@ -59,7 +76,7 @@ bsub -q oversubscribed -M 4000 -R "rusage[mem=4000] select[mem>4000]" -o test.o 
     --reference reference_manifest.tsv \
     --genus Streptococcus \
     --phenotypes pheno.tab \
-    --antibiotic penicillin \
+    --chosen_phenotype penicillin \
     -resume
 ```
 
