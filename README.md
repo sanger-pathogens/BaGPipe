@@ -77,6 +77,7 @@ bsub -q oversubscribed -M 4000 -R "rusage[mem=4000] select[mem>4000]" -o test.o 
     --genus Streptococcus \
     --phenotypes pheno.tab \
     --chosen_phenotype penicillin \
+    --bakta_db rds/databases/bakta_db_v6/db
     -resume
 ```
 
