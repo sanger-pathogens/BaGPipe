@@ -54,7 +54,7 @@ process WriteReferenceText {
     while IFS=, read -r sample_id assembly_path
     do
         if [[ \${sample_id} != "sample_id" ]]; then
-            echo -e "\${assembly_path}\\t\${sample_id}.gff\\tdraft"
+            echo -e "\${assembly_path}\\t\${sample_id}.gff3\\tdraft"
         fi
     done < "${manifest_ch}" >> "${output_file}"
     """
@@ -85,12 +85,13 @@ process GeneHitPlot {
 
     input:
     path genehit
+    path plot_script
 
     output:
     path "*.pdf", emit: genehit_plot_out
 
     script:
     """
-    Rscript ${projectDir}/scripts/gene_hit_summary_plot.R 
+    Rscript ${plot_script} ${genehit} 
     """
 }

@@ -211,6 +211,8 @@ workflow {
         AnnotateKmers(sig_kmer, reftxt, gff_files)
         genehit = AnnotateKmers.out.annotated_kmers_out
 
-        GeneHitPlot(genehit)
+        plot_script = Channel.value(file("${projectDir}/scripts/gene_hit_summary_plot.R"))
+
+        GeneHitPlot(genehit, plot_script)
     }
 }
