@@ -2,7 +2,7 @@
 process BaktaAnnotate {
     tag "${sample_id}"
     
-    container "quay.io/biocontainers/bakta:1.9.4--pyhdfd78af_0"
+    container "quay.io/biocontainers/bakta:1.11.3--pyhdfd78af_0"
 
     publishDir "${params.outdir}/bakta", mode:'copy', overwrite: true
 
