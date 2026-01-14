@@ -87,7 +87,12 @@ include {
     AnnotateKmers;
     GeneHitPlot
 } from './modules/SignificantKmerAnalysis'
-
+include { 
+    validate_unitigs;
+    buildSigFasta;
+    unitigCallerSimple;
+    validationSummaries
+} from './modules/ValidateUnitigs'
 
 /*
 ========================================================================================
@@ -211,6 +216,20 @@ workflow {
         AnnotateKmers(sig_kmer, reftxt, gff_files)
         genehit = AnnotateKmers.out.annotated_kmers_out
 
-        GeneHitPlot(genehit)
+        plot_script = Channel.value(file("${projectDir}/scripts/gene_hit_summary_plot.R"))
+        GeneHitPlot(genehit, plot_script)
+
+        // Validate unitigs if requested
+        if (params.validate_unitigs) {
+            validation_manifest_ch = Channel.fromPath(params.validation_manifest)
+
+            validate_unitigs(
+                validation_manifest_ch,
+                sig_kmer,
+                genehit,
+                params.outdir
+            )
+        }
     }
+
 }
