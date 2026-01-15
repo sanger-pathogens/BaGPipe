@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 require(ggplot2)
 require(ggrepel)
 library(ggrepel)
