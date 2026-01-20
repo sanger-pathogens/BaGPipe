@@ -19,7 +19,9 @@ Users have the flexibility to enter the workflow at alternative starting points 
 
 For the association analysis, [Pyseer](https://github.com/mgalardini/pyseer) (Lees et al, 2018) was used for its speed and design in addressing the common problems of bacterial GWAS like population strucutre, recombination rate, and multiple testing. By default, BaGPipe uses of a linear mixed model algorithm and unitigs as the input genotype (options recommended by Pyseer authors).
 
-In the post-processing stage, BaGPipe automatically performs significant unitig analysis. If the user provides reference files, it can conveniently produce Manhattan plots, annotate the significant unitigs, and eventually produce a gene-hit plot. 
+In the post-processing stage, BaGPipe automatically performs significant unitig analysis. If the user provides reference files, it can conveniently produce Manhattan plots, annotate the significant unitigs, and eventually produce a gene-hit plot. If the user provides an additional genome dataset, it can screen for significant unitigs from the discovery analysis in the provided dataset. 
+
+Users can also run AMR prediction on the input genomes. This provides a comparison of GWAS hits with known AMR genes from the AMRFinder database, allowing users to explore novelty within their analyses.
 
 BaGPipe facilitates GWAS analysis on large datasets by easing the computational burden. It optimises the use of requested memory and CPU, which can be customised if necessary. Additionally, an automated resource escalation strategy ensures that a process will be re-run with higher resource requests if the process failed due to lack of memory or runtime on an HPC cluster node.
 
@@ -39,6 +41,10 @@ BaGPipe facilitates GWAS analysis on large datasets by easing the computational 
 - \>= 16GB RAM
 - \>= 2 CPUs/cores
 - Enough space for images (< 10GB) and intermediate data
+
+### Scalability
+
+BaGPipe is scalable. BaGPipe can be run on HPC by exploiting Nextflow parallelism for per-sample steps, but for >5,000 genomes users should expect cohort-wide steps (pangenome/phylogeny/kinship) to dominate runtime and may prefer (i) providing pre-computed inputs (e.g., phylogeny/kinship/pangenome outputs) or (ii) splitting analyses by lineage/clade and combining results downstream, consistent with current Panaroo recommendations.
 
 ## Getting started
 
@@ -113,11 +119,12 @@ If unsure, I recommend the `unitig` approach, as it is the approach recommended 
 | Phylogenetic tree | A phylogenetic tree file for the pangenome in NEWICK format           | If the user prefers their own tree in “unitig” mode                                             |
 | Variant file      | A CSV file listing all sample IDs (first column) and the paths to their VCF files (second column) | If the user prefers their own VCFs in “snp” mode                                                |
 | Merged variant file | A merged VCF file for all samples                                     | If the user prefers their own merged VCFs in “snp” mode                                         |
+| Additional genomes for screening | A CSV file listing all sample IDs (first column) and the paths to their FASTA files (second column) |
 
 
 ## How it works?
 ### 1. Annotation
-By default, [Bakta](https://github.com/oschwengers/bakta) (v.1.9.4) (Schwengers, 2021) is used to annotate assembled genomic DNA. It employs various tools to predict genomic coordinates and gene functions and is heavily inspired by Prokka (described below), but does not need taxon-specific databases and provides comprehensive functional annotation and database cross-references.
+By default, [Bakta](https://github.com/oschwengers/bakta) (v.1.11.3) (Schwengers, 2021) is used to annotate assembled genomic DNA. It employs various tools to predict genomic coordinates and gene functions and is heavily inspired by Prokka (described below), but does not need taxon-specific databases and provides comprehensive functional annotation and database cross-references.
 
 [Prokka](https://github.com/tseemann/prokka) (v.1.14.6) (Seemann, 2014) can also be used for annotation. Most tools, except Prodigal, provide both coordinates and descriptions; Prodigal solely identifies coding sequence coordinates. Prokka then refines the annotations by comparing the predicted gene coordinates to multiple databases, escalating from smaller, reliable ones to larger, domain-specific collections, ultimately utilising curated protein family models. For each sample, Prokka outputs 10 files with a user-defined "sample_id" prefix. BaGPipe collects all the GFF files into one Nextflow channel for subsequent processing.
 
@@ -150,6 +157,11 @@ If the user selects the k-mer/unitig genotype method (“unitig”), BaGPipe tak
 Additionally, BaGPipe automatically annotates the significant k-mers/unitigs. It utilises all the references and the input assemblies as drafts for annotation, then finds annotations for the significant k-mers/unitigs, outputting “gene_hits.tsv”. Annotations labelled “ref” permit partial matches between the k-mers/unitigs and reference sequence, while those marked as “draft” necessitate an exact match. For each significant k-mer/unitig, BaGPipe enriches the output by including the coding genes it resides in, alongside both the closest upstream and downstream coding genes.
 
 While the user can inspect this file directly, there is an example R script provided that can be customised for visualisation. BaGPipe automatically plots these in three different sizes and the user can have a quick look to the overall distribution of p-value and effect size of the annotated genes.
+
+## Optional features
+BaGPipe provides optional modules to extend GWAS results and functional interpretation. The external screening module allows statistically significant k‑mers or unitigs identified in the discovery GWAS to be screened across independent genome cohorts, using a user‑supplied genome manifest. Genomes are matched for presence/absence of these loci, producing per‑sample detection counts, per‑locus prevalence, and optional gene‑level summaries when annotations are available, enabling rapid validation or exploration of loci in new datasets.
+
+Additionally, BaGPipe offers an optional antimicrobial resistance (AMR) annotation module that integrates AMRFinderPlus to identify known AMR genes directly from genome assemblies. When enabled, it automatically generates per‑sample AMR profiles and cohort‑level summaries of resistance determinants, supporting comparison with known AMR genes and assessment of novelty.
 
 ## Output and visualisation
 Output files are systematically organised into a hierarchical folder arrangement. The outputs of each process are arranged in independent folders. Additionally, Nextflow generates a separate “work” folder to store intermediate output files, which acts as a specific log for each run.
