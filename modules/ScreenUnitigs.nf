@@ -140,27 +140,27 @@ process unitigCallerSimple {
 
     container 'quay.io/biocontainers/unitig-caller:1.3.1--py311heec5c76_1'
 
-    shell:
-    '''
+    script:
+    """
     set -euo pipefail
-    mkdir -p !{outdir}
+    mkdir -p ${outdir}
 
     # Extract absolute FASTA paths from CSV (column 2), skip header line
-    tail -n +2 !{manifest_csv} | cut -d, -f2 > !{outdir}/new_refs.txt
+    tail -n +2 ${manifest_csv} | cut -d, -f2 > ${outdir}/new_refs.txt
 
     unitig-caller --simple \
-        --refs !{outdir}/new_refs.txt \
-        --unitigs !{sigfa} \
-        --out !{outdir}/screening_calls \
-        2> !{outdir}/screening_calls.log
+        --refs ${outdir}/new_refs.txt \
+        --unitigs ${sigfa} \
+        --out ${outdir}/screening_calls \
+        2> ${outdir}/screening_calls.log
     
     # Convert pyseer-style output to rtab matrix expected by screening_summaries.py
     python - <<'PY'
 from pathlib import Path
 import os
 
-py = Path("!{outdir}") / "screening_calls.pyseer"
-rtab = Path("!{outdir}") / "screening_calls.unitigs.Rtab"
+py = Path("${outdir}") / "screening_calls.pyseer"
+rtab = Path("${outdir}") / "screening_calls.unitigs.Rtab"
 if not py.exists():
     raise SystemExit(0)
 
@@ -171,7 +171,7 @@ with py.open() as f:
         line = line.strip()
         if not line or '|' not in line:
             continue
-        seq, rest = line.split('|', 1)
+        seq, rest = line.split('|', maxsplit=1)
         seq = seq.strip()
         parts = rest.strip().split()
         if seq not in data:
@@ -184,7 +184,7 @@ with py.open() as f:
                 samples.append(sample)
             try:
                 cnt = int(count)
-            except:
+            except ValueError:
                 try:
                     cnt = int(float(count))
                 except:
@@ -201,7 +201,7 @@ else:
             vals = [str(row.get(s, 0)) for s in samples]
             g.write(seq + '\t' + '\t'.join(vals) + os.linesep)
 PY
-    '''
+    """
 }
 
 

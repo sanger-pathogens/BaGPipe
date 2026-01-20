@@ -30,12 +30,16 @@ def printHelp() {
       --genotype_method            Genotype method to run GWAS, from a choice of three (unitig|pa|snp) (mandatory)
                                    Note: unitig is recommended.
       --annotation_method          Tool to use for annotation (prokka|bakta). Default: bakta. (optional)
+      --bakta_db                   Path to Bakta database (mandatory if using Bakta for annotation)    
       --reference                  Manifest containing paths to reference FASTA and GFF files (mandatory for significant k-mer/unitig analysis)
       --mygff                      Input a manifest containing paths to already annotated GFF files; must match sample_ids in manifest (optional)
       --mytree                     Input user preferred phylogenetic tree (optional)
       --mvcf                       Input already mergerd vcf.gz file (optional)
       --fe                         Run GWAS using fixed model (SEER) (optional)
       --help                       Print this help message (optional)
+      --screening_manifest         Manifest containing paths to FASTA files for external screening (optional)
+      --run_amrfinder              Run AMRFinderPlus on assemblies (optional)
+      --amrfinder_db               Path to AMRFinderPlus database directory (mandatory if --run_amrfinder is set)
 
     Alternative Options for Some Processes:
 
@@ -88,12 +92,7 @@ include {
     AnnotateKmers;
     GeneHitPlot
 } from './modules/SignificantKmerAnalysis'
-include { 
-    screen_unitigs;
-    buildSigFasta;
-    unitigCallerSimple;
-    screeningSummaries
-} from './modules/ScreenUnitigs'
+include { screen_unitigs } from './modules/ScreenUnitigs'
 include {
     AMRFinderPlus;
     AMRFinderSummary
@@ -274,7 +273,7 @@ workflow {
         GeneHitPlot(genehit, plot_script)
 
         // Screen unitigs if requested
-        if (params.screen_unitigs) {
+        if (params.screening_manifest) {
             screening_manifest_ch = Channel.fromPath(params.screening_manifest)
 
             screen_unitigs(

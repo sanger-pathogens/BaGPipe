@@ -33,13 +33,10 @@ def validate_parameters() {
         }
     }
 
-    if (params.validate_unitigs) {
-        validation_manifest=file(params.validation_manifest)
-        if (!validation_manifest.exists()) {
-            log.error("The genome manifest file specified does not exist.")
-            errors += 1
-        } else {
-            log.error("No validation genome manifest file specified. Please specify one using the --validation_manifest option.")
+    if (params.screening_manifest) {
+        screening_manifest=file(params.screening_manifest)
+        if (!screening_manifest.exists()) {
+            log.error("The screening genome manifest file specified does not exist. Please specify one using the --screening_manifest option.")
             errors += 1
         }
     } 
