@@ -33,6 +33,27 @@ def validate_parameters() {
         }
     }
 
+    if (params.screening_manifest) {
+        screening_manifest=file(params.screening_manifest)
+        if (!screening_manifest.exists()) {
+            log.error("The screening genome manifest file specified does not exist. Please specify one using the --screening_manifest option.")
+            errors += 1
+        }
+    } 
+
+    if (params.run_amrfinder) {
+        if (params.amrfinder_db) {
+            amr_db = file(params.amrfinder_db)
+            if (!amr_db.exists()) {
+                log.error("The AMRFinderPlus database directory specified does not exist: ${params.amrfinder_db}")
+                errors += 1
+            }
+        } else {
+            log.error("AMRFinderPlus requested (--run_amrfinder) but no database specified. Please provide --amrfinder_db pointing to the amrfinderplus-db directory.")
+            errors += 1
+        }
+    }
+
     if (errors > 0) {
         log.error(String.format("%d errors detected", errors))
         exit 1

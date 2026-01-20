@@ -30,12 +30,16 @@ def printHelp() {
       --genotype_method            Genotype method to run GWAS, from a choice of three (unitig|pa|snp) (mandatory)
                                    Note: unitig is recommended.
       --annotation_method          Tool to use for annotation (prokka|bakta). Default: bakta. (optional)
+      --bakta_db                   Path to Bakta database (mandatory if using Bakta for annotation)    
       --reference                  Manifest containing paths to reference FASTA and GFF files (mandatory for significant k-mer/unitig analysis)
       --mygff                      Input a manifest containing paths to already annotated GFF files; must match sample_ids in manifest (optional)
       --mytree                     Input user preferred phylogenetic tree (optional)
       --mvcf                       Input already mergerd vcf.gz file (optional)
       --fe                         Run GWAS using fixed model (SEER) (optional)
       --help                       Print this help message (optional)
+      --screening_manifest         Manifest containing paths to FASTA files for external screening (optional)
+      --run_amrfinder              Run AMRFinderPlus on assemblies (optional)
+      --amrfinder_db               Path to AMRFinderPlus database directory (mandatory if --run_amrfinder is set)
 
     Alternative Options for Some Processes:
 
@@ -83,11 +87,26 @@ include {
 include {
     SignificantKmers;
     KmerMap;
+    ManhattanPlotR;
     WriteReferenceText;
     AnnotateKmers;
     GeneHitPlot
 } from './modules/SignificantKmerAnalysis'
+include { screen_unitigs } from './modules/ScreenUnitigs'
+include {
+    AMRFinderPlus;
+    AMRFinderSummary
+} from './modules/AMRFinderPlus'
 
+/*
+========================================================================================
+    PARAMETER DEFAULTS
+========================================================================================
+*/
+
+if (!params.containsKey('amrfinder_args')) {
+    params.amrfinder_args = ''
+}
 
 /*
 ========================================================================================
@@ -135,6 +154,22 @@ workflow {
     gff_files = gff_files
         .map { it -> it[1] }
         .collect()
+
+    // Optional: run AMRFinderPlus on assemblies and summarise results
+    if (params.run_amrfinder) {
+        if (params.amrfinder_db) {
+            amr_db = Channel.fromPath(params.amrfinder_db, checkIfExists: true)
+        } else {
+            amr_db = Channel.value(null)
+        }
+
+        amr_input = genomes_ch.combine(amr_db)
+        AMRFinderPlus(amr_input)
+        amr_files = AMRFinderPlus.out.amrfinder_output
+            .map { it -> it[1] }
+            .collect()
+        AMRFinderSummary(amr_files)
+    }
 
     // Generate tree if necessary
     if (params.mytree) {
@@ -203,6 +238,12 @@ workflow {
             .map { row -> tuple(row[0], row[1]) }
             .combine(sig_kmer)
 
+        // Extract reference GFF path for Manhattan plot annotation
+        ref_gff_ch = ref_manifest_ch.splitCsv(header: false, sep:"\t")
+            .map { row -> file(row[1]) }
+            .first()
+
+        // Preserve Phandango-compatible plots for interactive visualisation
         KmerMap(ref_ch)
 
         WriteReferenceText(manifest_ch, ref_manifest_ch)
@@ -211,6 +252,37 @@ workflow {
         AnnotateKmers(sig_kmer, reftxt, gff_files)
         genehit = AnnotateKmers.out.annotated_kmers_out
 
-        GeneHitPlot(genehit)
+        // Flatten potential list emissions and keep only annotated_kmers.tsv for Manhattan plots
+        annot_kmers = genehit.flatMap { item ->
+            (item instanceof List) ? item : [item]
+        }.filter { f -> f.name == 'annotated_kmers.tsv' || f.toString().endsWith('annotated_kmers.tsv') }
+
+        // Create Manhattan plots from annotated kmers (which have genomic position data)
+        manhattan_script_ch = Channel.value(file("${projectDir}/scripts/manhattan_kmers.R"))
+
+        threshold_file_ch = pyseer_result
+            .flatMap { item -> (item instanceof List) ? item : [item] }
+            .filter { f -> f.name == "kmer_pattern_count_${params.chosen_phenotype}.txt" || f.toString().endsWith("kmer_pattern_count_${params.chosen_phenotype}.txt") }
+            .view { f -> "Using threshold file: ${f}" }
+
+        annot_with_threshold = annot_kmers.combine(threshold_file_ch)
+        
+        ManhattanPlotR(annot_with_threshold, manhattan_script_ch, ref_gff_ch)
+
+        plot_script = Channel.value(file("${projectDir}/scripts/gene_hit_summary_plot.R"))
+        GeneHitPlot(genehit, plot_script)
+
+        // Screen unitigs if requested
+        if (params.screening_manifest) {
+            screening_manifest_ch = Channel.fromPath(params.screening_manifest)
+
+            screen_unitigs(
+                screening_manifest_ch,
+                sig_kmer,
+                genehit,
+                params.outdir
+            )
+        }
     }
+
 }
