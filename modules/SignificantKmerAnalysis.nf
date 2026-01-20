@@ -33,6 +33,45 @@ process KmerMap {
     """
 }
 
+
+process ManhattanPlotR {
+    tag "${annot}"
+    publishDir "${params.outdir}/significant_unitigs/Manhattan", mode: 'copy', overwrite: true
+    // Use tidyverse image (ggplot2 preinstalled); ggrepel will auto-install in script if missing
+    container "rocker/tidyverse:4.3.2"
+
+    input:
+    tuple path(annot), path(thresh_file)
+    path rscript
+    path gff_file
+
+    output:
+    path "*.pdf", emit: manhattan_pdf
+    path "*.png", emit: manhattan_png
+
+    script:
+    """
+    # Ensure ggrepel is available inside the container
+    # Use temp library directory since /usr/local/lib/R/site-library is read-only
+    mkdir -p /tmp/R_lib
+    export R_LIBS_USER=/tmp/R_lib
+    
+    Rscript -e "
+    dir.create(Sys.getenv('R_LIBS_USER'), showWarnings=FALSE, recursive=TRUE)
+    if (!requireNamespace('ggrepel', quietly=TRUE)) {
+      install.packages('ggrepel', lib=Sys.getenv('R_LIBS_USER'), repos='https://cran.r-project.org', quiet=TRUE)
+    }
+    "
+    
+    Rscript ${rscript} \
+      --annot ${annot} \
+      --threshold-file ${thresh_file} \
+      --gff ${gff_file} \
+      --out-prefix "manhattan_kmers" \
+      --label-top 20
+    """
+}
+
 process WriteReferenceText {
     publishDir "${params.outdir}/significant_unitigs", mode: 'copy', overwrite: true
 
@@ -54,7 +93,7 @@ process WriteReferenceText {
     while IFS=, read -r sample_id assembly_path
     do
         if [[ \${sample_id} != "sample_id" ]]; then
-            echo -e "\${assembly_path}\\t\${sample_id}.gff\\tdraft"
+            echo -e "\${assembly_path}\\t\${sample_id}.gff3\\tdraft"
         fi
     done < "${manifest_ch}" >> "${output_file}"
     """
@@ -85,12 +124,13 @@ process GeneHitPlot {
 
     input:
     path genehit
+    path plot_script
 
     output:
     path "*.pdf", emit: genehit_plot_out
 
     script:
     """
-    Rscript ${projectDir}/scripts/gene_hit_summary_plot.R 
+    Rscript ${plot_script} ${genehit} 
     """
 }
