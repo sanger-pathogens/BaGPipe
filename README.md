@@ -5,7 +5,7 @@ Running a bacterial GWAS isn't that hard, but the pre- and post-processing of da
 
 **BaGPipe** is a nextflow pipeline that integrates a series of bioinformatic tools into a standard, tested workflow for performing bacterial GWAS on large datasets (see Figure below). 
 
-![Flowchart describing the pipeline](images/bgwas_pipeline_260116.drawio.svg)
+![Flowchart describing the pipeline](images/bagpipe_260120.drawio.svg)
 
 ## What does it do?
 
